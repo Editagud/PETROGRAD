@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Restaurant</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="style.css">
+        <script src="restaurant.js"></script>
+
+    </head>
+
+    <body>
+        <label id="label" for="m">&#x2630;</label>
+        <nav class="navbar">
+            <input type="checkbox" id="m">
+            <a href="menu.html">HOME</a>
+            <a href="menu.html#about">MENU</a>
+            <img id="logo" src="images/logored.png" alt="logo">
+            <a href="menu.html#project">ABOUT</a>
+            <a href="menu.html#footer">CONTACT</a>
+        </nav> 
+
+        <section class="parallax">
+            <img id="logooo" src="images/logored.png" alt="logo">
+
+        </section>
+
+        <main> </main>
+        
+        <div class="modal hide">
+            <article class="modal-content">
+                <!--<img class="sold" src="images/sold-out-md.png" alt="soldout"> -->
+                <img class="modalsold" src="#" alt="soldout"> 
+                <h3 class="modal-name">data-name</h3>
+                <img class="modal-image" src="#" alt="data-caption">
+                <p class="modal-description">data-longdescription</p>
+                <h4 class="price"><span class="listprice">data-price</span> <span class="discountprice"></span> kr.</h4>
+                <img class="al" src="#" alt="">
+                <img class="vegetar" src="#" alt="">
+    
+            </article>
+        </div>
+
+        <template class="categoryTemplate">
+            <section class="category">
+                <h1>hi</h1>
+            </section>
+
+        </template>
+
+        <template class="productTemplate">
+            <article class="list-product">
+
+                <img class="product-small-img" src="data-small-img" alt="data-caption">
+
+                <h3 class="name">data-name</h3>
+                <h4 class="price"><span class="listprice">data-price</span> <span class="discountprice"></span> kr.</h4>
+                <img class="vegetar" src="images/vegetarian.png" alt="vegetarian">
+                <img class="alc" src="images/alco.png" alt="Alcohol">
+                <img class="sold" src="images/sold-out-md.png" alt="soldout">
+                <br>
+                <button> MORE </button>
+
+            </article>
+        </template>		
+
+        <script>
+
+            let productlist_link = "http://kea-alt-del.dk/t5/api/productlist";
+            let categories_link = "http://kea-alt-del.dk/t5/api/categories"
+            let image_path = "http://kea-alt-del.dk/t5/site/imgs/";
+            let product_link = "http://kea-alt-del.dk/t5/api/product?id=";
+            let productTemplate = document.querySelector('.productTemplate').content;
+            let categoryTemplate = document.querySelector('.categoryTemplate').content;
+            let main = document.querySelector('main');
+            let modal = document.querySelector('.modal');
+            modal.addEventListener('click', function(){
+                modal.classList.add('hide');
+            })
+
+            function getCategories(catlink){
+                //console.log(catlink);
+                fetch(catlink)
+                    .then(function(response){
+                    return response.json()
+                })
+                    .then(function(data){
+                    //console.log(data);
+                    data.forEach(createCategory);
+                    getData(productlist_link);
+                })
+            }
+            function createCategory(cat){
+                console.log(cat);
+                let clone = categoryTemplate.cloneNode(true);
+                console.log(clone)
+                clone.querySelector('h1').textContent = cat;
+                clone.querySelector('section.category').id = cat;
+                main.appendChild(clone);
+            }
+            getCategories(categories_link)
+
+            function getData(link){ 
+                fetch(link).then(function(response){
+                    return response.json();
+                }).then(function(json){
+                    return show(json);
+                });
+            }
+            function show(json){
+                json.forEach(function(product){
+                    console.log(product);
+                    let clone = productTemplate.cloneNode(true);
+                    clone.querySelector('.name').textContent=product.name;
+
+                    let button = clone.querySelector('button');
+                    button.addEventListener('click',function(){
+                        modal.classList.remove('hide');
+                        console.log(product.id);
+                        let link = product_link + product.id;
+                        console.log(link);
+                        fetch(link).then(function(response){
+                            return response.json();
+                        }).then(function(json){
+                            return showMore(json);
+                        });
+                    })
+
+
+                    clone.querySelector('.listprice').textContent=product.price;
+
+                    clone.querySelector('.product-small-img').src=image_path + "small/" + product.image + "-sm.jpg";
+
+
+
+                    if(product.alcohol){
+                    } else{
+                        clone.querySelector('.alc').classList.add('hidden');
+                    }
+                    if(product.vegetarian){
+                    }else{
+                        clone.querySelector('.vegetar').classList.add('hidden');
+                    }
+
+                    if(product.discount){
+                        //console.log("I am cheaper");
+                        let newPrice = product.price - (product.price * product.discount/100);
+                        clone.querySelector('.list-product').classList.add('discount');
+                        //let newPriceElem = document.createElement('h4');
+                        clone.querySelector('.discountprice').textContent = newPrice;
+                    } 
+                    
+                    if(product.soldout){
+                        //console.log("I contains it");
+                    } else{
+                        clone.querySelector('.sold').classList.add('hidden');
+                    }
+
+                    console.log("#" + product.category)
+
+                    let section = document.querySelector("#" + product.category)
+                    section.appendChild(clone); 
+
+
+
+                });
+            }
+
+            function showMore(data){
+                //console.log(data.name);
+                modal.querySelector(".modal-name").textContent=data.name;
+                modal.querySelector(".modal-description").textContent=data.longdescription;
+                modal.querySelector(".modal-image").src=image_path + "small/" + data.image + "-sm.jpg";
+                modal.querySelector(".listprice").textContent=data.price;
+
+                    if(data.discount){
+                        console.log("I am cheaper");
+                        modal.querySelector('.modal-content').classList.add('discount');
+                        let newPrice = data.price - (data.price * data.discount/100);
+                        modal.querySelector('.discountprice').textContent = newPrice;
+                    } else {
+                        modal.querySelector('.modal-content').classList.remove('discount');
+                        modal.querySelector('.discountprice').textContent = "";
+                    }
+
+                if(data.soldout){
+                    console.log(data.soldout);
+                    modal.querySelector('.modalsold').src="images/sold-out-md.png";
+                } 
+                else{
+                    modal.querySelector('.modalsold').src = " ";  
+                }
+                
+                if(data.vegetarian){
+                    modal.querySelector('.vegetar').src="images/vegetarian.png";
+                   }else{
+                      modal.querySelector('.vegetar').src = " "; 
+                    }
+                if(data.alcohol){
+                     
+                    modal.querySelector('.al').src="images/alco.png";
+                   }else{
+                 modal.querySelector('.al').src = " "; 
+                    }
+            
+               
+            }
+            
+
+
+        </script>
+
+
+    </body>
+</html>
